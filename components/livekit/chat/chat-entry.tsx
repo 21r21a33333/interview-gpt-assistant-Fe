@@ -31,15 +31,15 @@ export const ChatEntry = ({
     <li
       data-lk-message-origin={messageOrigin}
       title={time.toLocaleTimeString(locale, { timeStyle: 'full' })}
-      className={cn('group flex flex-col gap-0.5', className)}
+      className={cn('group flex flex-col gap-1 mb-2', className)}
       {...props}
     >
       {(!hideTimestamp || !hideName || hasBeenEdited) && (
-        <span className="text-muted-foreground flex text-sm">
-          {!hideName && <strong className="mt-2">{name}</strong>}
+        <span className="text-muted-foreground flex text-xs px-2">
+          {!hideName && <strong className="mr-2">{name}</strong>}
 
           {!hideTimestamp && (
-            <span className="align-self-end ml-auto font-mono text-xs opacity-0 transition-opacity ease-linear group-hover:opacity-100">
+            <span className="font-mono opacity-70">
               {hasBeenEdited && '*'}
               {time.toLocaleTimeString(locale, { timeStyle: 'short' })}
             </span>
@@ -47,9 +47,18 @@ export const ChatEntry = ({
         </span>
       )}
 
-      <span className={cn('max-w-4/5 rounded-[20px] p-2', isUser ? 'bg-muted ml-auto' : 'mr-auto')}>
-        {message}
-      </span>
+      <div className={cn('flex', isUser ? 'justify-end' : 'justify-start')}>
+        <div
+          className={cn(
+            'max-w-[85%] rounded-2xl px-3 py-2 shadow-sm',
+            isUser
+              ? 'bg-blue-500 text-white rounded-br-md' // User messages - blue like WhatsApp
+              : 'bg-white border border-gray-200 text-gray-800 rounded-bl-md' // Agent messages - white
+          )}
+        >
+          <span className="text-sm leading-relaxed">{message}</span>
+        </div>
+      </div>
     </li>
   );
 };
