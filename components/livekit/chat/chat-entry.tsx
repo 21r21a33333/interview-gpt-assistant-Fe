@@ -2,6 +2,7 @@ import * as React from 'react';
 import type { MessageFormatter, ReceivedChatMessage } from '@livekit/components-react';
 import { cn } from '@/lib/utils';
 import { useChatMessage } from './hooks/utils';
+import MarkdownRenderer from './markdown-renderer';
 
 export interface ChatEntryProps extends React.HTMLAttributes<HTMLLIElement> {
   /** The chat massage object to display. */
@@ -56,7 +57,13 @@ export const ChatEntry = ({
               : 'bg-gray-100 text-gray-800 rounded-bl-md' // Agent messages - light gray like WhatsApp
           )}
         >
-          <span className="text-sm leading-relaxed whitespace-pre-wrap">{message}</span>
+          <MarkdownRenderer 
+            source={typeof message === 'string' ? message : String(message)} 
+            className={cn(
+              'text-sm leading-relaxed',
+              isUser ? 'prose-invert' : 'prose-gray'
+            )}
+          />
         </div>
       </div>
     </li>
