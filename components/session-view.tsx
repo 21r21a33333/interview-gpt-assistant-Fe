@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useState, useRef } from 'react';
 import { AnimatePresence, motion } from 'motion/react';
 import {
   type AgentState,
@@ -38,6 +38,21 @@ export const SessionView = ({
   const [chatOpen, setChatOpen] = useState(false);
   const { messages, send } = useChatAndTranscription();
   const room = useRoomContext();
+  const chatScrollRef = useRef<HTMLDivElement>(null);
+  const mobileChatScrollRef = useRef<HTMLDivElement>(null);
+
+  // Custom auto-scroll effect for chat messages
+  useEffect(() => {
+    const scrollToBottom = (element: HTMLDivElement | null) => {
+      if (element) {
+        element.scrollTop = element.scrollHeight;
+      }
+    };
+
+    // Scroll both desktop and mobile chat containers
+    scrollToBottom(chatScrollRef.current);
+    scrollToBottom(mobileChatScrollRef.current);
+  }, [messages]);
 
   useDebugMode({
     enabled: process.env.NODE_END !== 'production',
@@ -155,22 +170,33 @@ export const SessionView = ({
         <div className="hidden md:flex w-96 border-l border-border bg-background flex-col">
           {/* Chat Header */}
           <div className="p-4 border-b border-border bg-muted/50">
-            <h3 className="font-semibold text-lg">Agent Chat</h3>
-            <p className="text-sm text-muted-foreground">Conversation with AI Assistant</p>
+            <div className="flex items-center gap-3">
+              <div className="w-10 h-10 rounded-full bg-blue-500 flex items-center justify-center">
+                <svg className="w-5 h-5 text-white" fill="currentColor" viewBox="0 0 24 24">
+                  <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-2 15l-5-5 1.41-1.41L10 14.17l7.59-7.59L19 8l-9 9z"/>
+                </svg>
+              </div>
+              <div>
+                <h3 className="font-semibold text-lg">AI Assistant</h3>
+                <p className="text-sm text-muted-foreground">
+                  {isAgentAvailable(agentState) ? 'Online' : 'Offline'}
+                </p>
+              </div>
+            </div>
           </div>
           
           {/* Chat Messages */}
-          <div className="flex-1 overflow-hidden">
-            <ChatMessageView className="h-full" messages={messages}>
-              <div className="px-4 py-4 space-y-4 whitespace-pre-wrap">
-                <AnimatePresence>
+          <div className="flex-1 overflow-hidden bg-gray-50">
+            <div ref={chatScrollRef} className="h-full overflow-y-auto">
+              <div className="px-4 py-4 space-y-2">
+                <AnimatePresence mode="popLayout">
                   {messages.map((message: ReceivedChatMessage) => (
                     <motion.div
                       key={message.id}
-                      initial={{ opacity: 0, y: 20 }}
-                      animate={{ opacity: 1, y: 0 }}
-                      exit={{ opacity: 0, y: -20 }}
-                      transition={{ duration: 0.3, ease: 'easeOut' }}
+                      initial={{ opacity: 0, y: 20, scale: 0.95 }}
+                      animate={{ opacity: 1, y: 0, scale: 1 }}
+                      exit={{ opacity: 0, y: -20, scale: 0.95 }}
+                      transition={{ duration: 0.2, ease: 'easeOut' }}
                     >
                       <ChatEntry hideName key={message.id} entry={message} />
                     </motion.div>
@@ -180,13 +206,18 @@ export const SessionView = ({
                 {messages.length === 0 && (
                   <div className="flex items-center justify-center h-full text-center">
                     <div className="text-muted-foreground">
+                      <div className="w-16 h-16 mx-auto mb-4 rounded-full bg-blue-100 flex items-center justify-center">
+                        <svg className="w-8 h-8 text-blue-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z" />
+                        </svg>
+                      </div>
                       <p className="text-lg font-medium mb-2">Start a conversation</p>
                       <p className="text-sm">Ask the agent a question to begin chatting</p>
                     </div>
                   </div>
                 )}
               </div>
-            </ChatMessageView>
+            </div>
           </div>
         </div>
 
@@ -207,7 +238,19 @@ export const SessionView = ({
           <div className="md:hidden fixed inset-0 z-50 bg-background">
             {/* Mobile Chat Header */}
             <div className="flex items-center justify-between p-4 border-b border-border bg-muted/50">
-              <h3 className="font-semibold text-lg">Agent Chat</h3>
+              <div className="flex items-center gap-3">
+                <div className="w-8 h-8 rounded-full bg-blue-500 flex items-center justify-center">
+                  <svg className="w-4 h-4 text-white" fill="currentColor" viewBox="0 0 24 24">
+                    <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-2 15l-5-5 1.41-1.41L10 14.17l7.59-7.59L19 8l-9 9z"/>
+                  </svg>
+                </div>
+                <div>
+                  <h3 className="font-semibold text-lg">AI Assistant</h3>
+                  <p className="text-sm text-muted-foreground">
+                    {isAgentAvailable(agentState) ? 'Online' : 'Offline'}
+                  </p>
+                </div>
+              </div>
               <button
                 onClick={() => setChatOpen(false)}
                 className="p-2 hover:bg-muted rounded-full"
@@ -219,17 +262,17 @@ export const SessionView = ({
             </div>
             
             {/* Mobile Chat Messages */}
-            <div className="flex-1 overflow-hidden h-[calc(100vh-80px)]">
-              <ChatMessageView className="h-full" messages={messages}>
-                <div className="px-4 py-4 space-y-4 whitespace-pre-wrap">
-                  <AnimatePresence>
+            <div className="flex-1 overflow-hidden h-[calc(100vh-80px)] bg-gray-50">
+              <div ref={mobileChatScrollRef} className="h-full overflow-y-auto">
+                <div className="px-4 py-4 space-y-2">
+                  <AnimatePresence mode="popLayout">
                     {messages.map((message: ReceivedChatMessage) => (
                       <motion.div
                         key={message.id}
-                        initial={{ opacity: 0, y: 20 }}
-                        animate={{ opacity: 1, y: 0 }}
-                        exit={{ opacity: 0, y: -20 }}
-                        transition={{ duration: 0.3, ease: 'easeOut' }}
+                        initial={{ opacity: 0, y: 20, scale: 0.95 }}
+                        animate={{ opacity: 1, y: 0, scale: 1 }}
+                        exit={{ opacity: 0, y: -20, scale: 0.95 }}
+                        transition={{ duration: 0.2, ease: 'easeOut' }}
                       >
                         <ChatEntry hideName key={message.id} entry={message} />
                       </motion.div>
@@ -239,13 +282,18 @@ export const SessionView = ({
                   {messages.length === 0 && (
                     <div className="flex items-center justify-center h-full text-center">
                       <div className="text-muted-foreground">
+                        <div className="w-16 h-16 mx-auto mb-4 rounded-full bg-blue-100 flex items-center justify-center">
+                          <svg className="w-8 h-8 text-blue-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z" />
+                          </svg>
+                        </div>
                         <p className="text-lg font-medium mb-2">Start a conversation</p>
                         <p className="text-sm">Ask the agent a question to begin chatting</p>
                       </div>
                     </div>
                   )}
                 </div>
-              </ChatMessageView>
+              </div>
             </div>
           </div>
         )}

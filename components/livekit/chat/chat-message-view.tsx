@@ -7,21 +7,33 @@ export function useAutoScroll(scrollContentContainerRef: RefObject<Element | nul
   useEffect(() => {
     function scrollToBottom() {
       if (scrollContentContainerRef.current) {
-        // Use setTimeout to ensure DOM has fully updated after animations
-        setTimeout(() => {
-          if (scrollContentContainerRef.current) {
-            const element = scrollContentContainerRef.current;
-            element.scrollTop = element.scrollHeight;
-          }
-        }, 100);
+        const element = scrollContentContainerRef.current;
+        // Use immediate scroll for better responsiveness
+        element.scrollTop = element.scrollHeight;
+      }
+    }
+
+    function scrollToBottomSmooth() {
+      if (scrollContentContainerRef.current) {
+        const element = scrollContentContainerRef.current;
+        element.scrollTo({
+          top: element.scrollHeight,
+          behavior: 'smooth'
+        });
       }
     }
 
     if (scrollContentContainerRef.current) {
       const resizeObserver = new ResizeObserver(scrollToBottom);
-
       resizeObserver.observe(scrollContentContainerRef.current);
+      
+      // Initial scroll
       scrollToBottom();
+      
+      // Also scroll when dependencies change (like new messages)
+      if (dependencies.length > 0) {
+        scrollToBottomSmooth();
+      }
 
       return () => resizeObserver.disconnect();
     }
@@ -36,7 +48,14 @@ interface ChatProps extends React.HTMLAttributes<HTMLDivElement> {
 export const ChatMessageView = ({ className, children, messages = [], ...props }: ChatProps) => {
   const scrollContentRef = useRef<HTMLDivElement>(null);
 
-  useAutoScroll(scrollContentRef, [messages.length]); // Trigger scroll when messages change
+  // Create a more comprehensive dependency array for auto-scroll
+  const scrollDependencies = [
+    messages.length,
+    // Also trigger on message content changes (for streaming messages)
+    messages.map(m => m.id + (m.message || '')).join(',')
+  ];
+
+  useAutoScroll(scrollContentRef, scrollDependencies);
 
   return (
     <div ref={scrollContentRef} className={cn('flex flex-col overflow-y-auto', className)} {...props}>

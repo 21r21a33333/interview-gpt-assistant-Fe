@@ -50,13 +50,13 @@ export const ChatEntry = ({
       <div className={cn('flex', isUser ? 'justify-end' : 'justify-start')}>
         <div
           className={cn(
-            'max-w-[85%] rounded-2xl px-3 py-2 shadow-sm',
+            'max-w-[85%] rounded-2xl px-4 py-2 shadow-sm',
             isUser
               ? 'bg-blue-500 text-white rounded-br-md' // User messages - blue like WhatsApp
-              : 'bg-white border border-gray-200 text-gray-800 rounded-bl-md' // Agent messages - white
+              : 'bg-gray-100 text-gray-800 rounded-bl-md' // Agent messages - light gray like WhatsApp
           )}
         >
-          <span className="text-sm leading-relaxed">{message}</span>
+          <span className="text-sm leading-relaxed whitespace-pre-wrap">{message}</span>
         </div>
       </div>
     </li>
