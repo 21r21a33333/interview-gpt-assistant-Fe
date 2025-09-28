@@ -32,19 +32,12 @@ export const ChatEntry = ({
     <li
       data-lk-message-origin={messageOrigin}
       title={time.toLocaleTimeString(locale, { timeStyle: 'full' })}
-      className={cn('group flex flex-col gap-1 mb-2', className)}
+      className={cn('group mb-2 flex flex-col gap-1', className)}
       {...props}
     >
       {(!hideTimestamp || !hideName || hasBeenEdited) && (
-        <span className="text-muted-foreground flex text-xs px-2">
+        <span className="text-muted-foreground flex px-2 text-xs">
           {!hideName && <strong className="mr-2">{name}</strong>}
-
-          {!hideTimestamp && (
-            <span className="font-mono opacity-70">
-              {hasBeenEdited && '*'}
-              {time.toLocaleTimeString(locale, { timeStyle: 'short' })}
-            </span>
-          )}
         </span>
       )}
 
@@ -53,16 +46,13 @@ export const ChatEntry = ({
           className={cn(
             'max-w-[85%] rounded-2xl px-4 py-2 shadow-sm',
             isUser
-              ? 'bg-blue-500 text-white rounded-br-md' // User messages - blue like WhatsApp
-              : 'bg-gray-100 text-gray-800 rounded-bl-md' // Agent messages - light gray like WhatsApp
+              ? 'rounded-br-md bg-blue-500 text-white' // User messages - blue like WhatsApp
+              : 'rounded-bl-md bg-gray-100 text-gray-800' // Agent messages - light gray like WhatsApp
           )}
         >
-          <MarkdownRenderer 
-            source={typeof message === 'string' ? message : String(message)} 
-            className={cn(
-              'text-sm leading-relaxed',
-              isUser ? 'prose-invert' : 'prose-gray'
-            )}
+          <MarkdownRenderer
+            source={typeof message === 'string' ? message : String(message)}
+            className={cn('text-sm leading-relaxed', isUser ? 'prose-invert' : 'prose-gray')}
           />
         </div>
       </div>
