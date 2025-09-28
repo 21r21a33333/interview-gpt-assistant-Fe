@@ -168,20 +168,7 @@ export default async function Image() {
           {/* eslint-disable-next-line @next/next/no-img-element, jsx-a11y/alt-text */}
           <img src={wordmarkSrcBase64} width={wordmarkSize.width} height={wordmarkSize.height} />
         </div>
-        {/* logo */}
-        <div
-          style={{
-            position: 'absolute',
-            top: 200,
-            left: 460,
-            display: 'flex',
-            alignItems: 'center',
-            gap: 10,
-          }}
-        >
-          {/* eslint-disable-next-line @next/next/no-img-element, jsx-a11y/alt-text */}
-          <img src={logoSrcBase64} width={logoSize.width} height={logoSize.height} />
-        </div>
+        
         {/* title */}
         <div
           style={{

@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useEffect, useState, useRef } from 'react';
+import React, { useEffect, useRef, useState } from 'react';
 import { AnimatePresence, motion } from 'motion/react';
 import {
   type AgentState,
@@ -12,7 +12,7 @@ import { toastAlert } from '@/components/alert-toast';
 import { AgentControlBar } from '@/components/livekit/agent-control-bar/agent-control-bar';
 import { ChatEntry } from '@/components/livekit/chat/chat-entry';
 import { ChatMessageView } from '@/components/livekit/chat/chat-message-view';
-import { MediaTiles } from '@/components/livekit/media-tiles';
+import { CompactAgentDisplay } from '@/components/livekit/compact-agent-display';
 import useChatAndTranscription from '@/hooks/useChatAndTranscription';
 import { useDebugMode } from '@/hooks/useDebug';
 import type { AppConfig } from '@/lib/types';
@@ -108,195 +108,135 @@ export const SessionView = ({
       ref={ref}
       inert={disabled}
       className={cn(
-        'opacity-0 h-screen overflow-hidden',
+        'h-screen overflow-hidden opacity-0',
         // prevent page scrollbar
-        !chatOpen && 'max-h-svh overflow-hidden'
+        'max-h-svh overflow-hidden'
       )}
     >
-      {/* Two-column layout */}
-      <div className="flex h-full">
-        {/* Left Column - Video/Agent Interface */}
-        <div className="flex-1 relative bg-background">
-          <MediaTiles chatOpen={false} />
-          
-          {/* Control bar positioned at bottom of left column */}
-          <div className="absolute bottom-0 left-0 right-0 z-50 px-3 pt-2 pb-3 md:px-6 md:pb-6">
-            <motion.div
-              key="control-bar"
-              initial={{ opacity: 0, translateY: '100%' }}
-              animate={{
-                opacity: sessionStarted ? 1 : 0,
-                translateY: sessionStarted ? '0%' : '100%',
-              }}
-              transition={{ duration: 0.3, delay: sessionStarted ? 0.5 : 0, ease: 'easeOut' }}
-            >
-              <div className="relative z-10 mx-auto w-full max-w-lg">
-                {appConfig.isPreConnectBufferEnabled && (
-                  <motion.div
-                    initial={{ opacity: 0 }}
-                    animate={{
-                      opacity: sessionStarted && messages.length === 0 ? 1 : 0,
-                      transition: {
-                        ease: 'easeIn',
-                        delay: messages.length > 0 ? 0 : 0.8,
-                        duration: messages.length > 0 ? 0.2 : 0.5,
-                      },
-                    }}
-                    aria-hidden={messages.length > 0}
-                    className={cn(
-                      'absolute inset-x-0 -top-12 text-center',
-                      sessionStarted && messages.length === 0 && 'pointer-events-none'
-                    )}
-                  >
-                    <p className="animate-text-shimmer inline-block !bg-clip-text text-sm font-semibold text-transparent">
-                      Agent is listening, ask it a question
-                    </p>
-                  </motion.div>
-                )}
-
-                <AgentControlBar
-                  capabilities={capabilities}
-                  onChatOpenChange={setChatOpen}
-                  onSendMessage={handleSendMessage}
-                />
-              </div>
-              {/* skrim */}
-              <div className="from-background border-background absolute top-0 left-0 h-12 w-full -translate-y-full bg-gradient-to-t to-transparent" />
-            </motion.div>
-          </div>
-        </div>
-
-        {/* Right Column - Chat Messages */}
-        <div className="hidden md:flex w-96 border-l border-border bg-background flex-col">
-          {/* Chat Header */}
-          <div className="p-4 border-b border-border bg-muted/50">
+      {/* Chat-focused layout */}
+      <div className="flex h-full flex-col">
+        {/* Chat Header with Agent Status */}
+        <div className="border-border bg-muted/50 flex-shrink-0 border-b p-4">
+          <div className="flex items-center justify-between">
             <div className="flex items-center gap-3">
-              <div className="w-10 h-10 rounded-full bg-blue-500 flex items-center justify-center">
-                <svg className="w-5 h-5 text-white" fill="currentColor" viewBox="0 0 24 24">
-                  <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-2 15l-5-5 1.41-1.41L10 14.17l7.59-7.59L19 8l-9 9z"/>
+              <div className="flex h-10 w-10 items-center justify-center rounded-full bg-blue-500">
+                <svg
+                  fill="#fff"
+                  width="32"
+                  height="32"
+                  viewBox="0 0 24 24"
+                  xmlns="http://www.w3.org/2000/svg"
+                  className="h-8 w-8"
+                >
+                  <path d="M15.3568437,15 C15.7646155,15.4524132 16,16.046195 16,16.6740273 L16,18.5 C16,19.8807119 14.8807119,21 13.5,21 L4.5,21 C3.11928813,21 2,19.8807119 2,18.5 L2,16.6741582 C2,16.0462625 2.23543163,15.4524277 2.64327433,15 L2.5,15 C2.22385763,15 2,14.7761424 2,14.5 C2,14.2238576 2.22385763,14 2.5,14 L4.16159469,14 L6.20372283,12.860218 C5.46099525,12.1339918 5,11.1208315 5,10 C5,7.790861 6.790861,6 9,6 C11.209139,6 13,7.790861 13,10 C13,10.0851511 12.9973393,10.1696808 12.9920965,10.2535104 L13.5294677,9.70238819 C13.1955521,9.21872477 13,8.6321992 13,8 C13,6.34314575 14.3431458,5 16,5 C17.6568542,5 19,6.34314575 19,8 C19,8.63142186 18.8049285,9.21728235 18.4717634,9.70060362 L18.4756434,9.70454496 L20.2910569,11.5687647 C20.7456276,12.0355563 21,12.6613719 21,13.3129308 L21,14 L21.5,14 C21.7761424,14 22,14.2238576 22,14.5 C22,14.7761424 21.7761424,15 21.5,15 L15.3568437,15 L15.3568437,15 Z M13.8388411,14 L20,14 L20,13.3129308 C20,12.9219955 19.8473766,12.5465061 19.5746341,12.2664311 L17.7752165,10.4186373 C17.2781336,10.7840978 16.6642801,11 16,11 C15.3364952,11 14.7232995,10.7846015 14.2265245,10.4199164 L12.4260261,12.2664886 C12.2161243,12.4817616 12.1876639,12.5119114 12.1322325,12.5816619 C12.0367817,12.7017697 12.0030449,12.7911346 12.0001997,12.9735561 L13.8388411,14 Z M13.2430272,14.8126554 L10.9146921,13.5128341 C10.3460214,13.8234492 9.6936285,14 9,14 C8.30657563,14 7.65436264,13.8235531 7.08580996,13.5131083 L3.76895585,15.3643588 C3.29420285,15.6293348 3,16.1304646 3,16.6741582 L3,18.5 C3,19.3284271 3.67157288,20 4.5,20 L13.5,20 C14.3284271,20 15,19.3284271 15,18.5 L15,16.6740273 C15,16.130386 14.7058532,15.6292958 14.2311717,15.3642991 L13.5719516,14.9962814 C13.4392535,14.9800633 13.3226161,14.9118587 13.2430272,14.8126554 L13.2430272,14.8126554 Z M9,13 C10.6568542,13 12,11.6568542 12,10 C12,8.34314575 10.6568542,7 9,7 C7.34314575,7 6,8.34314575 6,10 C6,11.6568542 7.34314575,13 9,13 Z M16,10 C17.1045695,10 18,9.1045695 18,8 C18,6.8954305 17.1045695,6 16,6 C14.8954305,6 14,6.8954305 14,8 C14,9.1045695 14.8954305,10 16,10 Z" />
                 </svg>
               </div>
               <div>
-                <h3 className="font-semibold text-lg">AI Assistant</h3>
-                <p className="text-sm text-muted-foreground">
+                <h3 className="animate-text-shimmer inline-block !bg-clip-text text-lg font-semibold text-transparent">
+                  AI Assistant
+                </h3>
+                <p className="text-muted-foreground text-sm">
                   {isAgentAvailable(agentState) ? 'Online' : 'Offline'}
                 </p>
               </div>
             </div>
           </div>
-          
-          {/* Chat Messages */}
-          <div className="flex-1 overflow-hidden bg-gray-50">
-            <div ref={chatScrollRef} className="h-full overflow-y-auto">
-              <div className="px-4 py-4 space-y-2">
-                <AnimatePresence mode="popLayout">
-                  {messages.map((message: ReceivedChatMessage) => (
-                    <motion.div
-                      key={message.id}
-                      initial={{ opacity: 0, y: 20, scale: 0.95 }}
-                      animate={{ opacity: 1, y: 0, scale: 1 }}
-                      exit={{ opacity: 0, y: -20, scale: 0.95 }}
-                      transition={{ duration: 0.2, ease: 'easeOut' }}
-                    >
-                      <ChatEntry hideName key={message.id} entry={message} />
-                    </motion.div>
-                  ))}
-                </AnimatePresence>
-                
-                {messages.length === 0 && (
-                  <div className="flex items-center justify-center h-full text-center">
-                    <div className="text-muted-foreground">
-                      <div className="w-16 h-16 mx-auto mb-4 rounded-full bg-blue-100 flex items-center justify-center">
-                        <svg className="w-8 h-8 text-blue-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z" />
-                        </svg>
-                      </div>
-                      <p className="text-lg font-medium mb-2">Start a conversation</p>
-                      <p className="text-sm">Ask the agent a question to begin chatting</p>
-                    </div>
-                  </div>
-                )}
-              </div>
-            </div>
-          </div>
         </div>
 
-        {/* Mobile Chat Toggle */}
-        <div className="md:hidden fixed bottom-20 right-4 z-50">
-          <button
-            onClick={() => setChatOpen(!chatOpen)}
-            className="bg-blue-500 hover:bg-blue-600 text-white rounded-full p-3 shadow-lg transition-colors"
-          >
-            <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z" />
-            </svg>
-          </button>
-        </div>
+        {/* Chat Messages Area */}
+        <div className="bg-muted/50 flex-1 overflow-hidden">
+          <div ref={chatScrollRef} className="h-full overflow-y-auto bg-black">
+            <div className="space-y-2 px-4 py-4">
+              <AnimatePresence mode="popLayout">
+                {messages.map((message: ReceivedChatMessage) => (
+                  <motion.div
+                    key={message.id}
+                    initial={{ opacity: 0, y: 20, scale: 0.95 }}
+                    animate={{ opacity: 1, y: 0, scale: 1 }}
+                    exit={{ opacity: 0, y: -20, scale: 0.95 }}
+                    transition={{ duration: 0.2, ease: 'easeOut' }}
+                  >
+                    <ChatEntry hideName key={message.id} entry={message} />
+                  </motion.div>
+                ))}
+              </AnimatePresence>
 
-        {/* Mobile Chat Overlay */}
-        {chatOpen && (
-          <div className="md:hidden fixed inset-0 z-50 bg-background">
-            {/* Mobile Chat Header */}
-            <div className="flex items-center justify-between p-4 border-b border-border bg-muted/50">
-              <div className="flex items-center gap-3">
-                <div className="w-8 h-8 rounded-full bg-blue-500 flex items-center justify-center">
-                  <svg className="w-4 h-4 text-white" fill="currentColor" viewBox="0 0 24 24">
-                    <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-2 15l-5-5 1.41-1.41L10 14.17l7.59-7.59L19 8l-9 9z"/>
-                  </svg>
-                </div>
-                <div>
-                  <h3 className="font-semibold text-lg">AI Assistant</h3>
-                  <p className="text-sm text-muted-foreground">
-                    {isAgentAvailable(agentState) ? 'Online' : 'Offline'}
-                  </p>
-                </div>
-              </div>
-              <button
-                onClick={() => setChatOpen(false)}
-                className="p-2 hover:bg-muted rounded-full"
-              >
-                <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
-                </svg>
-              </button>
-            </div>
-            
-            {/* Mobile Chat Messages */}
-            <div className="flex-1 overflow-hidden h-[calc(100vh-80px)] bg-gray-50">
-              <div ref={mobileChatScrollRef} className="h-full overflow-y-auto">
-                <div className="px-4 py-4 space-y-2">
-                  <AnimatePresence mode="popLayout">
-                    {messages.map((message: ReceivedChatMessage) => (
-                      <motion.div
-                        key={message.id}
-                        initial={{ opacity: 0, y: 20, scale: 0.95 }}
-                        animate={{ opacity: 1, y: 0, scale: 1 }}
-                        exit={{ opacity: 0, y: -20, scale: 0.95 }}
-                        transition={{ duration: 0.2, ease: 'easeOut' }}
+              {messages.length === 0 && (
+                <div className="flex h-full items-center justify-center text-center">
+                  <div className="text-muted-foreground">
+                    <div className="dark:bg-grey-900 mx-auto mb-4 flex h-16 w-16 items-center justify-center rounded-full bg-gray-100">
+                      <svg
+                        className="h-8 w-8 text-gray-500"
+                        fill="none"
+                        stroke="currentColor"
+                        viewBox="0 0 24 24"
                       >
-                        <ChatEntry hideName key={message.id} entry={message} />
-                      </motion.div>
-                    ))}
-                  </AnimatePresence>
-                  
-                  {messages.length === 0 && (
-                    <div className="flex items-center justify-center h-full text-center">
-                      <div className="text-muted-foreground">
-                        <div className="w-16 h-16 mx-auto mb-4 rounded-full bg-blue-100 flex items-center justify-center">
-                          <svg className="w-8 h-8 text-blue-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z" />
-                          </svg>
-                        </div>
-                        <p className="text-lg font-medium mb-2">Start a conversation</p>
-                        <p className="text-sm">Ask the agent a question to begin chatting</p>
-                      </div>
+                        <path
+                          strokeLinecap="round"
+                          strokeLinejoin="round"
+                          strokeWidth={2}
+                          d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z"
+                        />
+                      </svg>
                     </div>
-                  )}
+                    <p className="animate-text-shimmer inline-block !bg-clip-text text-sm font-semibold text-transparent">
+                      Start a conversation
+                    </p>
+                    <br />
+                    <p className="animate-text-shimmer inline-block !bg-clip-text text-sm font-semibold text-transparent">
+                      Ask the agent a question to begin chatting
+                    </p>
+                  </div>
                 </div>
-              </div>
+              )}
             </div>
           </div>
-        )}
+        </div>
+
+        {/* Control Bar at Bottom */}
+        <div className="border-border bg-background flex-shrink-0 border-t">
+          <motion.div
+            key="control-bar"
+            initial={{ opacity: 0, translateY: '100%' }}
+            animate={{
+              opacity: sessionStarted ? 1 : 0,
+              translateY: sessionStarted ? '0%' : '100%',
+            }}
+            transition={{ duration: 0.3, delay: sessionStarted ? 0.5 : 0, ease: 'easeOut' }}
+            className="p-4"
+          >
+            <div className="relative mx-auto w-full max-w-2xl">
+              {appConfig.isPreConnectBufferEnabled && (
+                <motion.div
+                  initial={{ opacity: 0 }}
+                  animate={{
+                    opacity: sessionStarted && messages.length === 0 ? 1 : 0,
+                    transition: {
+                      ease: 'easeIn',
+                      delay: messages.length > 0 ? 0 : 0.8,
+                      duration: messages.length > 0 ? 0.2 : 0.5,
+                    },
+                  }}
+                  aria-hidden={messages.length > 0}
+                  className={cn(
+                    'absolute inset-x-0 -top-12 text-center',
+                    sessionStarted && messages.length === 0 && 'pointer-events-none'
+                  )}
+                >
+                  <p className="animate-text-shimmer inline-block !bg-clip-text text-sm font-semibold text-transparent">
+                    Agent is listening, ask it a question
+                  </p>
+                </motion.div>
+              )}
+
+              <AgentControlBar
+                capabilities={capabilities}
+                onChatOpenChange={setChatOpen}
+                onSendMessage={handleSendMessage}
+              />
+            </div>
+          </motion.div>
+        </div>
       </div>
     </section>
   );
